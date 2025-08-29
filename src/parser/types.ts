@@ -7,7 +7,24 @@ export interface GoalEvent {
   PlayerName: string;
   PlayerTeam: number; // 0 or 1
 }
-
+export interface ActorState {
+  actorId: number;
+  objectId: number;
+  nameId: number;
+  objectName: string;
+  instanceName: string;
+  kind: ActorKind;
+  attributes: Map<string, any>; // current attribute values
+  position?: { x: number | null; y: number | null; z: number | null } | null;
+  rotation?: { x: number; y: number; z: number; w: number } | null; // quaternion from RigidBody
+  eulerRotation?: {
+    yaw: number | null;
+    pitch: number | null;
+    roll: number | null;
+  } | null; // euler from initial_trajectory
+  linearVelocity?: any;
+  angularVelocity?: any;
+}
 export interface HighlightEvent {
   frame: number;
   CarName: string;
@@ -216,4 +233,58 @@ export interface ReplayData {
   content_crc?: number;
   network_frames?: NetworkFrames;
   [key: string]: unknown;
+}
+
+// --- Derived / helper types (not directly from JSON) ---
+export type ActorKind =
+  | "Ball"
+  | "BoostPickup"
+  | "PlayerPRI"
+  | "Car"
+  | "CarComponent"
+  | "GoalVolume"
+  | "Camera"
+  | "Other";
+
+export interface UpdatedActorWithFrame extends UpdatedActor {
+  frameIndex: number; // index within network_frames.frames
+}
+
+export interface ActorMeta {
+  actorId: number;
+  objectId: number;
+  nameId: number;
+  objectName: string;
+  instanceName: string;
+  kind: ActorKind;
+  firstFrame: number; // creation frame index
+  deletedFrame?: number; // frame index when deleted (exclusive)
+  updates: UpdatedActorWithFrame[]; // accumulated updates
+}
+
+// --- Frame State types ---
+export interface ActorState {
+  actorId: number;
+  objectId: number;
+  nameId: number;
+  objectName: string;
+  instanceName: string;
+  kind: ActorKind;
+  attributes: Map<string, any>; // current attribute values
+  position?: { x: number | null; y: number | null; z: number | null } | null;
+  rotation?: { x: number; y: number; z: number; w: number } | null; // quaternion from RigidBody
+  eulerRotation?: {
+    yaw: number | null;
+    pitch: number | null;
+    roll: number | null;
+  } | null; // euler from initial_trajectory
+  linearVelocity?: any;
+  angularVelocity?: any;
+}
+
+export interface FrameState {
+  frameIndex: number;
+  time: number;
+  delta: number;
+  actors: Map<number, ActorState>;
 }
