@@ -118,10 +118,82 @@ export interface NewActor {
   [key: string]: unknown; // extra future keys
 }
 
+// Attribute value variants observed so far. Extend as needed.
+export interface ActiveActorAttribute {
+  ActiveActor: { active: boolean; actor: number };
+}
+export interface ReplicatedBoostAttribute {
+  ReplicatedBoost: {
+    grant_count: number;
+    boost_amount: number;
+    unused1: number;
+    unused2: number;
+  };
+}
+export interface RigidBodyAttribute {
+  RigidBody: {
+    sleeping: boolean;
+    location: { x: number; y: number; z: number } | null;
+    rotation: { x: number; y: number; z: number; w: number } | null;
+    linear_velocity: unknown;
+    angular_velocity: unknown;
+  };
+}
+export interface IntAttribute {
+  Int: number;
+}
+export interface Int64Attribute {
+  Int64: string;
+}
+export interface BooleanAttribute {
+  Boolean: boolean;
+}
+export interface ByteAttribute {
+  Byte: number;
+}
+export interface StringAttribute {
+  String: string;
+}
+export interface CamSettingsAttribute {
+  CamSettings: {
+    fov: number;
+    height: number;
+    angle: number;
+    distance: number;
+    stiffness: number;
+    swivel: number;
+    transition: number;
+  };
+}
+
+export type ActorAttribute =
+  | ActiveActorAttribute
+  | ReplicatedBoostAttribute
+  | RigidBodyAttribute
+  | IntAttribute
+  | Int64Attribute
+  | BooleanAttribute
+  | ByteAttribute
+  | StringAttribute
+  | CamSettingsAttribute
+  | Record<string, unknown>; // fallback for untyped attributes
+
+export interface UpdatedActor {
+  actor_id: number;
+  stream_id: number;
+  object_id: number;
+  attribute: ActorAttribute;
+  [key: string]: unknown;
+}
+
+export type DeletedActorId = number; // simple list of actor ids
+
 export interface NetworkFrame {
   time: number;
   delta: number;
   new_actors?: NewActor[];
+  updated_actors?: UpdatedActor[];
+  deleted_actors?: DeletedActorId[];
   // other arrays like updated_actors / deleted_actors could be added here later
   [key: string]: unknown;
 }
