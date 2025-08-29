@@ -1,14 +1,7 @@
 import * as path from "path";
+import * as fs from "fs";
 import { spawn } from "child_process";
-
-interface NetworkFrames {
-  frames: unknown[]; // Could be refined if structure known
-}
-
-interface ReplayData {
-  network_frames?: NetworkFrames;
-  [key: string]: unknown; // Fallback for other properties
-}
+import { ReplayData } from "./types";
 
 export class ReplayParseError extends Error {
   constructor(message: string, public readonly rawPreview?: string) {
@@ -18,14 +11,31 @@ export class ReplayParseError extends Error {
 }
 
 export default function parseReplay(
-  replayRelativePath: string = path.join("test", "replays", "test.replay")
+  replayPathInput: string = path.join("test", "replays", "test.replay")
 ): Promise<ReplayData> {
   return new Promise<ReplayData>((resolve, reject) => {
-    const exePath = path.join(__dirname, "vendor", "rrrocket.exe");
-    const args = [replayRelativePath, "-p", "-n"]; // -p prints JSON, -n omits network cache (?) keep flags
+    // Assume compiled file lives in dist/src/parser or run via ts-node from src/parser.
+    // Project root two levels up from this file (../..)
+    const projectRoot = path.resolve(__dirname, "..", "..");
 
-    // Try without shell first; Windows should execute .exe directly. Fallback to shell if it fails to spawn.
-    const child = spawn(exePath, args, { shell: false });
+    const exePath = path.join(projectRoot, "vendor", "rrrocket.exe");
+    const replayPath = path.isAbsolute(replayPathInput)
+      ? replayPathInput
+      : path.join(projectRoot, replayPathInput);
+
+    if (!fs.existsSync(exePath)) {
+      reject(new Error(`Replay parser executable not found at ${exePath}`));
+      return;
+    }
+    if (!fs.existsSync(replayPath)) {
+      reject(new Error(`Replay file not found at ${replayPath}`));
+      return;
+    }
+
+    const args = [replayPath, "-p", "-n"]; // -p prints JSON, -n additional flag retained
+
+    // Try without shell first; Windows should execute .exe directly. Fallback to shell if ENOENT.
+    const child = spawn(exePath, args, { shell: false, cwd: projectRoot });
 
     let stdoutBuffer = "";
     let stderrBuffer = "";
